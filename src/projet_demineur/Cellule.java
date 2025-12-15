@@ -45,10 +45,17 @@ public class Cellule {
     public String toString() {
         
         if (Devoilee= false){
-            
-        }
-        return "Cellule{" + "PresenceBombe=" + PresenceBombe + ", Devoilee=" + Devoilee + ", nbdeBombesAdjacents=" + nbdeBombesAdjacents + '}';
+            return "?";
+        } 
+        if (Devoilee=true){
+            return "B";  
+        }  
+        if (nbdeBombesAdjacents > 0){
+            return String.valueOf(nbdeBombesAdjacents);
+        }  
+        return " ";
     }
+
 
     
     
