@@ -4,17 +4,15 @@
  */
 package projet_demineur;
 
-/**
- *
- * @author emirb
- */
+import javax.swing.SwingUtilities;
+
 public class Projet_Demineur {
 
-    /**
-     * @param args the command line arguments
-     */
     public static void main(String[] args) {
-        // TODO code application logic here
+        // L'interface (NewJFrame) sera faite à la fin comme demandé
+        SwingUtilities.invokeLater(() -> {
+            NewJFrame f = new NewJFrame();
+            f.setVisible(true);
+        });
     }
-    
 }

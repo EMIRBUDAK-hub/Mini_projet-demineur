@@ -4,59 +4,61 @@
  */
 package projet_demineur;
 
-/**
- *
- * @author emirb
- */
 public class Cellule {
-    private boolean PresenceBombe;
-    private boolean Devoilee;
-    private int nbdeBombesAdjacents;
 
-    public Cellule(boolean PresenceBombe) {
-        this.PresenceBombe = PresenceBombe;
-        this.Devoilee=false;
-        this.nbdeBombesAdjacents=0;
-        
+    private boolean bombe;
+    private boolean devoilee;
+    private boolean drapeau;
+
+    private int nbBombesAdj;
+
+    // Bonus : kit
+    private boolean kit;
+    private boolean kitConsomme;
+
+    // Bonus : vies (une bombe cliquée explose une fois)
+    private boolean bombeExplosee;
+
+    public Cellule() {
+        this.bombe = false;
+        this.devoilee = false;
+        this.drapeau = false;
+        this.nbBombesAdj = 0;
+        this.kit = false;
+        this.kitConsomme = false;
+        this.bombeExplosee = false;
     }
 
-    public boolean isPresenceBombe() {
-        return PresenceBombe;
+    public boolean hasBombe() { return bombe; }
+    public void setBombe(boolean b) { this.bombe = b; }
+
+    public boolean isDevoilee() { return devoilee; }
+    public void setDevoilee(boolean d) { this.devoilee = d; }
+
+    public boolean hasDrapeau() { return drapeau; }
+    public void setDrapeau(boolean d) { this.drapeau = d; }
+    public void toggleDrapeau() {
+        if (!devoilee) drapeau = !drapeau;
     }
 
-    public int getNbdeBombesAdjacents() {
-        return nbdeBombesAdjacents;
+    public int getNbBombesAdj() { return nbBombesAdj; }
+    public void setNbBombesAdj(int n) { this.nbBombesAdj = n; }
+
+    public boolean hasKit() { return kit; }
+    public void setKit(boolean k) { this.kit = k; }
+
+    public boolean isKitConsomme() { return kitConsomme; }
+
+    /** Consomme le kit (usage unique). Retourne true si un kit a bien été consommé. */
+    public boolean consommerKit() {
+        if (kit && !kitConsomme) {
+            kitConsomme = true;
+            kit = false;
+            return true;
+        }
+        return false;
     }
 
-    public void placerBombe(){
-    this.PresenceBombe=true;
-    
-}    
-    
-    public void revelerCellule(){
-        this.Devoilee=true;
-    }
-    
-    public void setNbdeBombesAdjacents(int nbdeBombesAdjacents) {
-        this.nbdeBombesAdjacents = nbdeBombesAdjacents;
-    }
-
-    @Override
-    public String toString() {
-        
-        if (Devoilee= false){
-            return "?";
-        } 
-        if (Devoilee=true){
-            return "B";  
-        }  
-        if (nbdeBombesAdjacents > 0){
-            return String.valueOf(nbdeBombesAdjacents);
-        }  
-        return " ";
-    }
-
-
-    
-    
+    public boolean isBombeExplosee() { return bombeExplosee; }
+    public void setBombeExplosee(boolean b) { this.bombeExplosee = b; }
 }

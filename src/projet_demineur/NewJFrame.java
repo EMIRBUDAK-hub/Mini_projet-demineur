@@ -11,16 +11,15 @@ import javax.swing.SpinnerNumberModel;
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
-
 /**
  *
  * @author tciab
  */
 public class NewJFrame extends javax.swing.JFrame {
-    
+
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(NewJFrame.class.getName());
 
-        // --- MOTEUR DU JEU ---
+    // --- MOTEUR DU JEU ---
     private final Partie partie = new Partie();
 
     // --- BOUTONS DE LA GRILLE ---
@@ -30,60 +29,86 @@ public class NewJFrame extends javax.swing.JFrame {
      * Creates new form NewJFrame
      */
     public NewJFrame() {
-    initComponents();
-    setTitle("Démineur");
-    setLocationRelativeTo(null);
+        initComponents();
+        setTitle("Démineur");
+        setLocationRelativeTo(null);
 
-    // Modèles des spinners (valeur, min, max, pas)
-    spLignes.setModel(new SpinnerNumberModel(10, 2, 30, 1));
-    spColonnes.setModel(new SpinnerNumberModel(10, 2, 30, 1));
-    spBombes.setModel(new SpinnerNumberModel(15, 1, 400, 1));
-    spKits.setModel(new SpinnerNumberModel(2, 0, 400, 1));
+        // Modèles des spinners (valeur, min, max, pas)
+        spLignes.setModel(new SpinnerNumberModel(10, 2, 30, 1));
+        spColonnes.setModel(new SpinnerNumberModel(10, 2, 30, 1));
+        spBombes.setModel(new SpinnerNumberModel(15, 1, 400, 1));
+        spKits.setModel(new SpinnerNumberModel(2, 0, 400, 1));
 
-    // Action du bouton
-    btnNouvellePartie.addActionListener(e -> lancerNouvellePartie());
+        // Action du bouton
+        btnNouvellePartie.addActionListener(e -> lancerNouvellePartie());
 
-    // Message initial
-    lblInfo.setText("Clique gauche = révéler | clic droit = drapeau");
+        // Message initial
+        lblInfo.setText("Clique gauche = révéler | clic droit = drapeau");
 
-    // Lance une partie au démarrage
-    lancerNouvellePartie();
-}
-    
+        // Lance une partie au démarrage
+        lancerNouvellePartie();
+    }
+
     private void rafraichirAffichage() {
-    GrilleDeJeu g = partie.getGrille();
-    if (g == null) return;
+        GrilleDeJeu g = partie.getGrille();
+        if (g == null) {
+            return;
+        }
 
-    lblVies.setText("Vies : " + partie.getVies());
+        lblVies.setText("Vies : " + partie.getVies());
 
-    for (int i = 0; i < g.getLignes(); i++) {
-        for (int j = 0; j < g.getColonnes(); j++) {
-            Cellule c = g.getCellule(i, j);
-            JButton b = boutons[i][j];
+        for (int i = 0; i < g.getLignes(); i++) {
+            for (int j = 0; j < g.getColonnes(); j++) {
+                Cellule c = g.getCellule(i, j);
+                JButton b = boutons[i][j];
+                // Reset visuel à chaque refresh
+                b.setEnabled(true);
+                b.setBackground(null);   // remet la couleur par défaut
 
-            if (!c.isDevoilee()) {
-                b.setText(c.hasDrapeau() ? "F" : "");
-            } else if (c.hasBombe()) {
-                b.setText("B");
-            } else {
-                int n = c.getNbBombesAdj();
-                b.setText(n == 0 ? "" : String.valueOf(n));
+                if (!c.isDevoilee()) {
+                    // Case cachée : cliquable
+                    b.setEnabled(true);
+                    b.setBackground(null);
+                    b.setText(c.hasDrapeau() ? "F" : "");
+                } else {
+                    if (c.hasBombe()) {
+                        // Bombe révélée : on affiche, mais on laisse cliquable (ou non, à toi)
+                        b.setText("B");
+                        b.setEnabled(true);
+                        b.setBackground(null);
+                    } else {
+                        int n = c.getNbBombesAdj();
+                        b.setText(n == 0 ? "" : String.valueOf(n));
+
+                        if (n == 0) {
+                            // ✅ Case vide (0) : grisée + non cliquable
+                            b.setEnabled(false);
+                            b.setBackground(java.awt.Color.LIGHT_GRAY);
+                        } else {
+                            // ✅ Case avec chiffre : reste cliquable + couleur normale
+                            b.setEnabled(true);
+                            b.setBackground(null);
+                        }
+                    }
+                }
             }
         }
     }
-}
+
+
+        
+
+    
 
     private void verifierFinPartie() {
-    if (partie.estGagnee()) {
-        lblInfo.setText("Victoire !");
-        JOptionPane.showMessageDialog(this, "Victoire !");
-    } else if (partie.estPerdue()) {
-        lblInfo.setText("Défaite !");
-        JOptionPane.showMessageDialog(this, "Défaite : plus de vies.");
+        if (partie.estGagnee()) {
+            lblInfo.setText("Victoire !");
+            JOptionPane.showMessageDialog(this, "Victoire !");
+        } else if (partie.estPerdue()) {
+            lblInfo.setText("Défaite !");
+            JOptionPane.showMessageDialog(this, "Défaite : plus de vies.");
+        }
     }
-}
-
-
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -153,71 +178,87 @@ public class NewJFrame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void construireGrilleBoutons(int lignes, int colonnes) {
-    pnlGrille.removeAll();
-    pnlGrille.setLayout(new GridLayout(lignes, colonnes));
+        pnlGrille.removeAll();
+        pnlGrille.setLayout(new GridLayout(lignes, colonnes));
 
-    boutons = new JButton[lignes][colonnes];
+        boutons = new JButton[lignes][colonnes];
 
-    for (int i = 0; i < lignes; i++) {
-        for (int j = 0; j < colonnes; j++) {
-            JButton b = new JButton();
-            b.setFocusPainted(false);
+        for (int i = 0; i < lignes; i++) {
+            for (int j = 0; j < colonnes; j++) {
+                JButton b = new JButton();
+                b.setFocusPainted(false);
+                b.setOpaque(true);
+                b.setBorderPainted(true);
+                b.setContentAreaFilled(true);
 
-            final int li = i;
-            final int co = j;
+                final int li = i;
+                final int co = j;
 
-            b.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mousePressed(MouseEvent e) {
-                    if (partie.estPerdue() || partie.estGagnee()) return;
+                b.addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mousePressed(MouseEvent e) {
+                        if (partie.estPerdue() || partie.estGagnee()) {
+                            return;
+                        }
 
-                    if (e.getButton() == MouseEvent.BUTTON3) {
-                        partie.clicDroit(li, co);
-                        lblInfo.setText("Drapeau");
-                        rafraichirAffichage();
-                        return;
+                        if (e.getButton() == MouseEvent.BUTTON3) {
+                            partie.clicDroit(li, co);
+                            lblInfo.setText("Drapeau");
+                            rafraichirAffichage();
+                            return;
+                        }
+
+                        if (e.getButton() == MouseEvent.BUTTON1) {
+                            int event = partie.clicGauche(li, co);
+
+                            if (event == 2) {
+                                lblInfo.setText("Kit utilisé");
+                            }
+                            if (event == 3) {
+                                lblInfo.setText("Kit ! Bombe désamorcée");
+                            }
+                            if (event == 4) {
+                                lblInfo.setText("BOOM ! -1 vie");
+                            }
+                            if (event <= 1) {
+                                lblInfo.setText("");
+                            }
+
+                            rafraichirAffichage();
+                            verifierFinPartie();
+                        }
                     }
+                });
 
-                    if (e.getButton() == MouseEvent.BUTTON1) {
-                        int event = partie.clicGauche(li, co);
-
-                        if (event == 2) lblInfo.setText("Kit utilisé");
-                        if (event == 3) lblInfo.setText("Kit ! Bombe désamorcée");
-                        if (event == 4) lblInfo.setText("BOOM ! -1 vie");
-                        if (event <= 1) lblInfo.setText("");
-
-                        rafraichirAffichage();
-                        verifierFinPartie();
-                    }
-                }
-            });
-
-            boutons[i][j] = b;
-            pnlGrille.add(b);
+                boutons[i][j] = b;
+                pnlGrille.add(b);
+            }
         }
+
+        pnlGrille.revalidate();
+        pnlGrille.repaint();
+        pack();
     }
 
-    pnlGrille.revalidate();
-    pnlGrille.repaint();
-    pack();
-}
-
-    
     private void lancerNouvellePartie() {
-    int lignes = (Integer) spLignes.getValue();
-    int colonnes = (Integer) spColonnes.getValue();
-    int bombes = (Integer) spBombes.getValue();
-    int kits = (Integer) spKits.getValue();
+        int lignes = (Integer) spLignes.getValue();
+        int colonnes = (Integer) spColonnes.getValue();
+        int bombes = (Integer) spBombes.getValue();
+        int kits = (Integer) spKits.getValue();
 
-    int max = lignes * colonnes;
-    if (bombes >= max) bombes = max - 1;
-    if (kits > max) kits = max;
+        int max = lignes * colonnes;
+        if (bombes >= max) {
+            bombes = max - 1;
+        }
+        if (kits > max) {
+            kits = max;
+        }
 
-    partie.nouvellePartie(lignes, colonnes, bombes, kits);
+        partie.nouvellePartie(lignes, colonnes, bombes, kits);
 
-    construireGrilleBoutons(lignes, colonnes);
-    rafraichirAffichage();
-}
+        construireGrilleBoutons(lignes, colonnes);
+        rafraichirAffichage();
+    }
 
     /**
      * @param args the command line arguments
