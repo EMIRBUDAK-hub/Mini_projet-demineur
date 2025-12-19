@@ -1,5 +1,12 @@
 package projet_demineur;
 
+import java.awt.GridLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import javax.swing.JButton;
+import javax.swing.JOptionPane;
+import javax.swing.SpinnerNumberModel;
+
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
@@ -13,12 +20,70 @@ public class NewJFrame extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(NewJFrame.class.getName());
 
+        // --- MOTEUR DU JEU ---
+    private final Partie partie = new Partie();
+
+    // --- BOUTONS DE LA GRILLE ---
+    private JButton[][] boutons;
+
     /**
      * Creates new form NewJFrame
      */
     public NewJFrame() {
-        initComponents();
+    initComponents();
+    setTitle("Démineur");
+    setLocationRelativeTo(null);
+
+    // Modèles des spinners (valeur, min, max, pas)
+    spLignes.setModel(new SpinnerNumberModel(10, 2, 30, 1));
+    spColonnes.setModel(new SpinnerNumberModel(10, 2, 30, 1));
+    spBombes.setModel(new SpinnerNumberModel(15, 1, 400, 1));
+    spKits.setModel(new SpinnerNumberModel(2, 0, 400, 1));
+
+    // Action du bouton
+    btnNouvellePartie.addActionListener(e -> lancerNouvellePartie());
+
+    // Message initial
+    lblInfo.setText("Clique gauche = révéler | clic droit = drapeau");
+
+    // Lance une partie au démarrage
+    lancerNouvellePartie();
+}
+    
+    private void rafraichirAffichage() {
+    GrilleDeJeu g = partie.getGrille();
+    if (g == null) return;
+
+    lblVies.setText("Vies : " + partie.getVies());
+
+    for (int i = 0; i < g.getLignes(); i++) {
+        for (int j = 0; j < g.getColonnes(); j++) {
+            Cellule c = g.getCellule(i, j);
+            JButton b = boutons[i][j];
+
+            if (!c.isDevoilee()) {
+                b.setText(c.hasDrapeau() ? "F" : "");
+            } else if (c.hasBombe()) {
+                b.setText("B");
+            } else {
+                int n = c.getNbBombesAdj();
+                b.setText(n == 0 ? "" : String.valueOf(n));
+            }
+        }
     }
+}
+
+    private void verifierFinPartie() {
+    if (partie.estGagnee()) {
+        lblInfo.setText("Victoire !");
+        JOptionPane.showMessageDialog(this, "Victoire !");
+    } else if (partie.estPerdue()) {
+        lblInfo.setText("Défaite !");
+        JOptionPane.showMessageDialog(this, "Défaite : plus de vies.");
+    }
+}
+
+
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -34,13 +99,16 @@ public class NewJFrame extends javax.swing.JFrame {
         lbllignes = new javax.swing.JLabel();
         spLignes = new javax.swing.JSpinner();
         lblcolonnes = new javax.swing.JLabel();
-        spcolonnes = new javax.swing.JSpinner();
+        spColonnes = new javax.swing.JSpinner();
         lblBombes = new javax.swing.JLabel();
         spBombes = new javax.swing.JSpinner();
         lblKits = new javax.swing.JLabel();
         spKits = new javax.swing.JSpinner();
         btnNouvellePartie = new javax.swing.JButton();
         lblVies = new javax.swing.JLabel();
+        pnlGrille = new javax.swing.JPanel();
+        pnlBottom = new javax.swing.JPanel();
+        lblInfo = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -54,7 +122,7 @@ public class NewJFrame extends javax.swing.JFrame {
 
         lblcolonnes.setText("colonnes");
         pnlTop.add(lblcolonnes);
-        pnlTop.add(spcolonnes);
+        pnlTop.add(spColonnes);
 
         lblBombes.setText("Bombes");
         pnlTop.add(lblBombes);
@@ -72,8 +140,84 @@ public class NewJFrame extends javax.swing.JFrame {
 
         getContentPane().add(pnlTop, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 10, -1, -1));
 
+        pnlGrille.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+        pnlGrille.setLayout(new java.awt.GridLayout());
+        getContentPane().add(pnlGrille, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 60, 490, 240));
+
+        lblInfo.setText("Clique gauche = révéler | clic droit = drapeau ");
+        pnlBottom.add(lblInfo);
+
+        getContentPane().add(pnlBottom, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 300, 310, 20));
+
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void construireGrilleBoutons(int lignes, int colonnes) {
+    pnlGrille.removeAll();
+    pnlGrille.setLayout(new GridLayout(lignes, colonnes));
+
+    boutons = new JButton[lignes][colonnes];
+
+    for (int i = 0; i < lignes; i++) {
+        for (int j = 0; j < colonnes; j++) {
+            JButton b = new JButton();
+            b.setFocusPainted(false);
+
+            final int li = i;
+            final int co = j;
+
+            b.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    if (partie.estPerdue() || partie.estGagnee()) return;
+
+                    if (e.getButton() == MouseEvent.BUTTON3) {
+                        partie.clicDroit(li, co);
+                        lblInfo.setText("Drapeau");
+                        rafraichirAffichage();
+                        return;
+                    }
+
+                    if (e.getButton() == MouseEvent.BUTTON1) {
+                        int event = partie.clicGauche(li, co);
+
+                        if (event == 2) lblInfo.setText("Kit utilisé");
+                        if (event == 3) lblInfo.setText("Kit ! Bombe désamorcée");
+                        if (event == 4) lblInfo.setText("BOOM ! -1 vie");
+                        if (event <= 1) lblInfo.setText("");
+
+                        rafraichirAffichage();
+                        verifierFinPartie();
+                    }
+                }
+            });
+
+            boutons[i][j] = b;
+            pnlGrille.add(b);
+        }
+    }
+
+    pnlGrille.revalidate();
+    pnlGrille.repaint();
+    pack();
+}
+
+    
+    private void lancerNouvellePartie() {
+    int lignes = (Integer) spLignes.getValue();
+    int colonnes = (Integer) spColonnes.getValue();
+    int bombes = (Integer) spBombes.getValue();
+    int kits = (Integer) spKits.getValue();
+
+    int max = lignes * colonnes;
+    if (bombes >= max) bombes = max - 1;
+    if (kits > max) kits = max;
+
+    partie.nouvellePartie(lignes, colonnes, bombes, kits);
+
+    construireGrilleBoutons(lignes, colonnes);
+    rafraichirAffichage();
+}
 
     /**
      * @param args the command line arguments
@@ -103,15 +247,18 @@ public class NewJFrame extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnNouvellePartie;
     private javax.swing.JLabel lblBombes;
+    private javax.swing.JLabel lblInfo;
     private javax.swing.JLabel lblKits;
     private javax.swing.JLabel lblVies;
     private javax.swing.JLabel lblcolonnes;
     private javax.swing.JLabel lbllignes;
+    private javax.swing.JPanel pnlBottom;
+    private javax.swing.JPanel pnlGrille;
     private javax.swing.JPanel pnlRoot;
     private javax.swing.JPanel pnlTop;
     private javax.swing.JSpinner spBombes;
+    private javax.swing.JSpinner spColonnes;
     private javax.swing.JSpinner spKits;
     private javax.swing.JSpinner spLignes;
-    private javax.swing.JSpinner spcolonnes;
     // End of variables declaration//GEN-END:variables
 }
